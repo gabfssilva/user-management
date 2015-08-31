@@ -740,4 +740,48 @@ public class UserEndpointITest {
                 .assertThat()
                 .statusCode(400);
     }
+
+    @Test
+    public void assertThatServerReturns409IfTriesToInsertAddressTwice() {
+        String simpleBody = "{\n" +
+                "    \"name\": \"Gabriel\",\n" +
+                "    \"address\": {\n" +
+                "        \"street\": \"Rua Augusta\",\n" +
+                "        \"city\": \"Sao Paulo\",\n" +
+                "        \"number\": 404,\n" +
+                "        \"district\":\"Consolacao\",\n" +
+                "        \"zipcode\": \"01304000\",\n" +
+                "        \"state\": \"SP\",\n" +
+                "        \"complementary_address\": \"apto X\"\n" +
+                "    }\n" +
+                "}";
+
+        final String location = given().body(simpleBody)
+                .contentType(ContentType.JSON)
+                .baseUri("http://localhost")
+                .port(PORT)
+                .when()
+                .post("/user-management/api/v1/users")
+                .then().log().everything(true)
+                .assertThat()
+                .statusCode(201)
+                .and().extract().header("Location");
+
+
+        String simpleBodyWithAddress = "{\n" +
+                "        \"street\": \"Rua Augusta\",\n" +
+                "        \"city\": \"Sao Paulo\",\n" +
+                "        \"number\": 404,\n" +
+                "        \"zipcode\": \"01304000\",\n" +
+                "        \"district\": \"Consolacao\",\n" +
+                "        \"state\": \"SP\",\n" +
+                "        \"complementary_address\": \"apto X\"\n" +
+                "    }";
+
+        given().body(simpleBodyWithAddress).contentType(ContentType.JSON)
+                .when()
+                .post(location + "/address")
+                .then().log().everything(true)
+                .and().assertThat().statusCode(409);
+    }
 }
